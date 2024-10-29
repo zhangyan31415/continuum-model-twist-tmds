@@ -308,10 +308,8 @@ class ContinuousModel:
                     return term1 ** n * term2 ** n
             return 0
         
-        for Q1 in self.Qset:
-            # Find the index of Q1
-            idx = np.where(np.all(np.isclose(self.Qset, Q1, atol=1e-5), axis=1))[0][0]
-            kinetic_matrix[idx, idx] += calculate_term(k, m, n, Q1, Q1)
+        for i, Q1 in enumerate(self.Qset):
+            kinetic_matrix[i, i] += calculate_term(k, m, n, Q1, Q1)
         
         return kinetic_matrix
     

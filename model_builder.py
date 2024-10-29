@@ -201,11 +201,11 @@ class ContinuousModel:
         Returns:
         np.ndarray: The projection matrix.
         """
-        q1norm = np.linalg.norm(Qset[0])
+        q_norm = np.min(np.linalg.norm(Qset, axis=1))
         value = np.exp(1j * np.pi / 3)
     
         C3_proj_matrix = np.array([
-            [value if np.linalg.norm(Q1 - self.rotation_matrix(np.deg2rad(120)) @ Q2) < q1norm / 10 else 0 
+            [value if np.linalg.norm(Q1 - self.rotation_matrix(np.deg2rad(120)) @ Q2) < q_norm / 10 else 0 
              for Q2 in Qset] 
             for Q1 in Qset
         ])
@@ -223,9 +223,9 @@ class ContinuousModel:
         Returns:
         np.ndarray: The projection matrix.
         """
-        q1norm = np.linalg.norm(Qset[0])
+        q_norm = np.min(np.linalg.norm(Qset, axis=1))
         C2yT_proj_matrix = np.array([
-            [1 if np.linalg.norm(Q1 - PAULI_MATRICES[3] @ Q2) < q1norm / 10 else 0 
+            [1 if np.linalg.norm(Q1 - PAULI_MATRICES[3] @ Q2) < q_norm / 10 else 0 
              for Q2 in Qset] 
             for Q1 in Qset
         ])
@@ -350,9 +350,9 @@ class ContinuousModel:
     
         return terms
     
-    def GenTermQ0plusQ1(self, k, harmonic, m, n, hoppingtype):
+    def GenTerm(self, k, harmonic, m, n, hoppingtype):
         """
-        Generate terms for Q0 + Q1 in the Hamiltonian.
+        Generate terms in the Hamiltonian.
         
         Parameters:
         k (array-like): The k-point vector.
@@ -444,7 +444,7 @@ class ContinuousModel:
             for key, coeff in terms.items():
                 m, n = map(int, key)
                 hoppingtype = 'intra'
-                terms_generated = self.GenTermQ0plusQ1(
+                terms_generated = self.GenTerm(
                     k, harmonic, m, n, hoppingtype
                 )
                 Hamk += np.real(coeff) * terms_generated[0] 
@@ -454,7 +454,7 @@ class ContinuousModel:
             for key, coeff in terms.items():
                 m, n = map(int, key)
                 hoppingtype = 'inter'
-                terms_generated = self.GenTermQ0plusQ1(
+                terms_generated = self.GenTerm(
                     k, harmonic, m, n, hoppingtype
                 )
                 Hamk += np.real(coeff) * terms_generated[0] 
@@ -480,82 +480,6 @@ class ContinuousModel:
             coeff_list_offdiag_inter=self.inter,
         )
         return Hk
-    
-    def build_hamiltonians1(self, n_jobs=-1):
-        """
-        Build Hamiltonians for all k-points along the kpath in parallel with a progress bar.
-        
-        Parameters:
-        n_jobs (int): Number of parallel jobs.
-                    -1 means using all available CPU cores.
-                    Positive integers specify the exact number of cores.
-        """
-        # Define the function to build a single Hamiltonian
-        def build_single_hamiltonian(k_point):
-            """
-            Construct the Hamiltonian matrix for a given k-point.
-            
-            Parameters:
-            k_point (array-like): The k-point vector.
-            
-            Returns:
-            np.ndarray: The Hamiltonian matrix for the k-point.
-            """
-            return self.get_hamiltonian(k_point)
-        
-        # Wrap the Parallel processing within tqdm_joblib to display a progress bar
-        with tqdm_joblib(tqdm(desc="Building Hamiltonians", total=len(self.kpath_cart))):
-            # Parallelize the Hamiltonian construction across all k-points
-            self.Hamiltonians = Parallel(n_jobs=n_jobs)(
-                delayed(build_single_hamiltonian)(k) for k in self.kpath_cart
-            )
-        
-        # Confirmation message upon completion
-        print("All Hamiltonians built successfully.")
-  
-    def diagonalize_hamiltonians1(self, n_jobs=-1):
-        """
-        Diagonalize all Hamiltonian matrices to obtain eigenvalues and eigenvectors with a progress bar.
-        
-        Parameters:
-        n_jobs (int): Number of parallel jobs. 
-                    -1 means using all available CPU cores. 
-                    Positive integers specify the exact number of cores.
-        """
-        # Define the diagonalization function for a single Hamiltonian matrix
-        def diagonalize(Hk):
-            """
-            Diagonalize a single Hamiltonian matrix.
-            
-            Parameters:
-            Hk (np.ndarray): Hamiltonian matrix for a specific k-point.
-            
-            Returns:
-            tuple: Sorted eigenvalues and corresponding eigenvectors.
-            """
-            eigenvals, eigenvecs = eigh(Hk)  # Compute eigenvalues and eigenvectors
-            idx = np.argsort(eigenvals)      # Get indices that would sort the eigenvalues
-            sorted_eigenvals = eigenvals[idx]
-            sorted_eigenvecs = eigenvecs[:, idx]
-            return sorted_eigenvals, sorted_eigenvecs
-        
-        
-        # Use tqdm_joblib to add a progress bar to joblib's Parallel
-        with tqdm_joblib(tqdm(desc="Diagonalizing Hamiltonians", total=len(self.Hamiltonians))):
-            # Parallelize the diagonalization across all Hamiltonian matrices
-            results = Parallel(n_jobs=n_jobs)(
-                delayed(diagonalize)(Hk) for Hk in self.Hamiltonians
-            )
-        
-        # Unzip the results into eigenvalues and eigenvectors
-        self.eigenvalues, self.eigenvectors = zip(*results)
-        
-        # Convert to NumPy arrays for easier manipulation
-        self.eigenvalues = np.array(self.eigenvalues) - np.max(self.eigenvalues)  # Shift energies
-        self.eigenvectors = np.array(self.eigenvectors)
-        
-        # Confirmation message upon completion
-        print("All Hamiltonians diagonalized successfully.")
 
     def build_hamiltonians(self, n_jobs=-1, show_progress=False):
         """

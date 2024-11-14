@@ -36,3 +36,18 @@ You can install the required libraries using:
 pip install numpy scipy matplotlib joblib tqdm
 ```
 
+## Citation
+
+If you use our code for your research, please consider citing our paper:
+```bibtex
+@misc{zhang_Universal_2024,
+  title = {Universal Moiré-Model-Building Method without Fitting: Application to Twisted MoTe₂ and WSe₂,
+  author = {Zhang, Yan and Pi, Hanqi and Liu, Jiaxuan and Miao, Wangqian and Qi, Ziyue and Regnault, Nicolas and Weng, Hongming and Dai, Xi and Bernevig, B. Andrei and Wu, Quansheng and Yu, Jiabin},
+  year = {2024},
+  month = nov,
+  eprint = {2411.08108},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2411.08108},
+  url = {https://arxiv.org/abs/2411.08108}
+}
+

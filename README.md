@@ -19,6 +19,7 @@ To use the continuum model, simply open and run the provided Jupyter Notebook (c
 - **Example 2**: Reduced model of twisted bilayer MoTe₂.
 - **Example 3**: Full model of twisted bilayer WSe₂.
 - **Example 4**: Reduced model of twisted bilayer WSe₂.
+
 **Note:** Due to the structural convention difference, the Chern number calculated using these parameters in 2.88° and 3.48° tMoTe₂ is opposite to that in our paper. We will update the parameters soon.
 
 ## Getting Started
